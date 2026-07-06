@@ -4,7 +4,7 @@ All notable changes to the `neewer` library are recorded here. The format follow
 [Keep a Changelog](https://keepachangelog.com/); the project uses semantic
 versioning — **pre-1.0, a minor bump may change the public API.**
 
-## [Unreleased]
+## [0.1.2] — 2026-07-05
 
 ### Fixed
 - `Fleet.start()` no longer runs the BlueZ zombie-link self-heal when a custom
