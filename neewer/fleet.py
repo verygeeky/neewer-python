@@ -207,6 +207,10 @@ class Fleet:
         #: The supervisor connects to the cached handle instead of re-scanning.
         self._devices: dict = {}
         self._supervisors: dict[str, asyncio.Task] = {}
+        #: Strong references to fire-and-forget tasks (auto-query on connect). The
+        #: event loop only holds tasks weakly — without a reference here, GC can
+        #: collect one mid-run and its exception is never retrieved.
+        self._background_tasks: set[asyncio.Task] = set()
         self._scanning = False
         self._effect_task: asyncio.Task | None = None
         self._lock = asyncio.Lock()
@@ -419,7 +423,9 @@ class Fleet:
         # freshly-connected tube self-identifies and populates telemetry immediately,
         # instead of showing "generic"/blank until something else polls it. Fire-and-
         # forget so it never holds up the supervisor loop; best-effort by design.
-        asyncio.create_task(self._auto_query_on_connect(tube.mac))
+        task = asyncio.create_task(self._auto_query_on_connect(tube.mac))
+        self._background_tasks.add(task)
+        task.add_done_callback(self._background_tasks.discard)
 
     async def _auto_query_on_connect(self, mac: str) -> None:
         """Best-effort battery/state/version query fired when a tube connects.
@@ -479,6 +485,11 @@ class Fleet:
             except (asyncio.CancelledError, Exception):
                 pass
         self._supervisors.clear()
+
+        # Best-effort auto-query tasks have no business outliving the fleet.
+        for task in list(self._background_tasks):
+            task.cancel()
+        self._background_tasks.clear()
 
         if self._scanning:
             await self.transport.stop_scan()
