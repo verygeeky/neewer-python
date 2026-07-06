@@ -4,7 +4,22 @@ All notable changes to the `neewer` library are recorded here. The format follow
 [Keep a Changelog](https://keepachangelog.com/); the project uses semantic
 versioning — **pre-1.0, a minor bump may change the public API.**
 
-## [0.1.0] — unreleased
+## [Unreleased]
+
+### Added
+- **`neewer.testing`** — a public, stdlib-only `MockTransport` + `MockTube` so
+  downstream suites can run a real `Fleet` with no radio: virtual tubes that
+  advertise/stop-advertising like hardware, frame parsing into per-tube state
+  (`power` / `hsi` / `cct` + full write log), checksummed query replies
+  (battery / state / version) on the notify path, and failure injection
+  (`drop()`, `write_latency`, `fail_writes`). (#1)
+
+### Fixed
+- `Fleet` now holds strong references to its fire-and-forget auto-query tasks
+  (the event loop keeps tasks weakly; an unreferenced one could be
+  garbage-collected mid-run) and cancels any still in flight on `stop()`.
+
+## [0.1.0] — 2026-07-05
 
 Initial extraction of the `neewer` library. Highlights:
 
