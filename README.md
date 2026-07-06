@@ -67,7 +67,8 @@ $ pip install neewer
 ```
 
 Requires Python 3.11+. The only runtime dependency is
-[`bleak`](https://github.com/hbldh/bleak).
+[`bleak`](https://github.com/hbldh/bleak). Developed on Linux; for Windows see
+[docs/INSTALL-WINDOWS.md](docs/INSTALL-WINDOWS.md) (draft — feedback welcome).
 
 ## The typed API
 
