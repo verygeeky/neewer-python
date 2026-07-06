@@ -62,7 +62,19 @@ def _install_bleak_stub() -> None:
 
     bleak.BleakClient = BleakClient
     bleak.BleakScanner = BleakScanner
+
+    # Mirror bleak's exception module so `from bleak.exc import BleakError`
+    # resolves under the stub (the CLI's Bluetooth-unavailable detection needs
+    # the class to exist even in a bleak-free test run).
+    exc_module = types.ModuleType("bleak.exc")
+
+    class BleakError(Exception):
+        """Stub of bleak's base error; raised by tests, never by the stubs."""
+
+    exc_module.BleakError = BleakError
+    bleak.exc = exc_module
     sys.modules["bleak"] = bleak
+    sys.modules["bleak.exc"] = exc_module
 
 
 _install_bleak_stub()

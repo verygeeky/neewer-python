@@ -4,6 +4,14 @@ All notable changes to the `neewer` library are recorded here. The format follow
 [Keep a Changelog](https://keepachangelog.com/); the project uses semantic
 versioning — **pre-1.0, a minor bump may change the public API.**
 
+## [Unreleased]
+
+### Fixed
+- The `neewer` CLI now answers a missing/unusable Bluetooth stack (a VM with no
+  adapter, BlueZ not running, the radio off) with a one-screen diagnosis and
+  exit code 1 instead of a raw traceback. `NEEWER_DEBUG=1` restores the
+  traceback; non-Bluetooth errors still raise.
+
 ## [0.1.2] — 2026-07-05
 
 ### Fixed
