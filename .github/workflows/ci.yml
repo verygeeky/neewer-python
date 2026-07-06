@@ -1,0 +1,33 @@
+name: CI
+
+# Lint + the hardware-free unit suite on every push/PR. The tests stub bleak
+# (see tests/conftest.py) and never touch a radio, so no BLE stack is installed.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Lint only — never `ruff format`: it collapses the column-aligned magic-byte
+      # comments and re-cases verbatim protocol bytes (see pyproject rationale).
+      - uses: astral-sh/ruff-action@v3
+        with:
+          args: check
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      # Only pytest — the suite is hardware-free (bleak is stubbed in conftest).
+      - run: pip install pytest
+      - run: python -m pytest
