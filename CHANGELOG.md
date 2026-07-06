@@ -4,6 +4,15 @@ All notable changes to the `neewer` library are recorded here. The format follow
 [Keep a Changelog](https://keepachangelog.com/); the project uses semantic
 versioning — **pre-1.0, a minor bump may change the public API.**
 
+## [Unreleased]
+
+### Fixed
+- `Fleet.start()` no longer runs the BlueZ zombie-link self-heal when a custom
+  transport is injected. The heal is bleak-backend-only; with a
+  `neewer.testing.MockTransport` it would disconnect real lights that another
+  process on the machine legitimately holds — exactly the environment a
+  downstream test suite runs in.
+
 ## [0.1.1] — 2026-07-05
 
 ### Added

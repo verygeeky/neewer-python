@@ -265,11 +265,16 @@ class Fleet:
         # Self-heal: a previous hard kill can leave BlueZ holding a zombie link to
         # one of our tubes, so the light won't advertise and we'd never find it.
         # Disconnect any such stale link first (best-effort, Linux/BlueZ only).
-        cleared = await bluez.clear_stale_connections(self.prefixes, self.positions.keys())
-        if cleared:
-            log.info("cleared %d stale BlueZ link(s) from a prior run; letting tubes re-advertise",
-                     len(cleared))
-            await asyncio.sleep(_STALE_SETTLE)      # give the light time to advertise again
+        # ONLY for the real bleak backend: with an injected transport (a mock, an
+        # ESP32 bridge, ...) touching the host's BlueZ is meaningless at best —
+        # and at worst a test suite disconnects physical lights that some *other*
+        # process on the machine legitimately holds.
+        if isinstance(self.transport, BleakTransport):
+            cleared = await bluez.clear_stale_connections(self.prefixes, self.positions.keys())
+            if cleared:
+                log.info("cleared %d stale BlueZ link(s) from a prior run; "
+                         "letting tubes re-advertise", len(cleared))
+                await asyncio.sleep(_STALE_SETTLE)  # give the light time to advertise again
         await self.transport.start_scan(self._on_advert)
         self._scanning = True
         # Give initial adverts a moment to arrive so callers that immediately

@@ -306,16 +306,28 @@ async def _wait_for(predicate, timeout: float = 2.0) -> None:
             await asyncio.sleep(0.005)
 
 
-async def _no_stale_links(prefixes, macs):
-    """Stand-in for the BlueZ self-heal: never touch the host's real Bluetooth."""
-    return []
+def test_start_skips_bluez_self_heal_with_injected_transport(monkeypatch):
+    # The BlueZ startup self-heal is bleak-backend-only. With an injected
+    # transport it must NOT run: a downstream test suite on a machine with real
+    # lights held by another process would otherwise disconnect them.
+    async def _boom(prefixes, macs):
+        raise AssertionError("clear_stale_connections must not run for a mock transport")
+
+    monkeypatch.setattr(fleet_mod.bluez, "clear_stale_connections", _boom)
+    monkeypatch.setattr(fleet_mod, "_INITIAL_SETTLE", 0.0)
+    fleet = Fleet(transport=MockTransport(tubes=[MockTube(mac=MAC1)]))
+
+    async def body():
+        await fleet.start()                         # would raise if the heal ran
+        await fleet.stop()
+
+    run(body())
 
 
 def test_fleet_end_to_end_scan_connect_dispatch_drop_reconnect(monkeypatch):
-    # Shrink the fleet's timing so discovery/reconnect complete in milliseconds,
-    # and stub the BlueZ startup self-heal — on a machine with real lights it
-    # would otherwise disconnect them. This suite must stay hardware-free.
-    monkeypatch.setattr(fleet_mod.bluez, "clear_stale_connections", _no_stale_links)
+    # Shrink the fleet's timing so discovery/reconnect complete in milliseconds.
+    # No BlueZ stubbing needed: start() skips the self-heal for a non-bleak
+    # transport (see test_start_skips_bluez_self_heal_with_injected_transport).
     monkeypatch.setattr(fleet_mod, "_INITIAL_SETTLE", 0.0)
     monkeypatch.setattr(fleet_mod, "_SUPERVISE_CONNECTED", 0.02)
     monkeypatch.setattr(fleet_mod, "_SUPERVISE_RETRY_BASE", 0.02)
