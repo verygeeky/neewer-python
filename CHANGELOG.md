@@ -6,6 +6,18 @@ versioning — **pre-1.0, a minor bump may change the public API.**
 
 ## [Unreleased]
 
+## [0.1.3] — 2026-07-14
+
+### Added
+- **`neewer.ota` and the `neewer-ota` CLI**: firmware flashing over the custom
+  `0x78` OTA block transport (rides the normal control service, not Nordic DFU).
+  Pure, testable frame builders and parsers (`header_frame`, `block_frame`,
+  `parse_ack`) plus an ACK-driven `flash()` and a read-only `check()` engine over
+  an injectable `OtaLink`. Fragments are paced ~20 ms apart with
+  write-with-response, which keeps the two-chip UART reassembler from overrunning.
+  The CLI is dry-run by default; `--confirm` is required to write. Confirmed
+  working on a TL60 RGB-3 and a TL120C-2.
+
 ### Fixed
 - The `neewer` CLI now answers a missing/unusable Bluetooth stack (a VM with no
   adapter, BlueZ not running, the radio off) with a one-screen diagnosis and

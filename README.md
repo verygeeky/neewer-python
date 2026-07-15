@@ -27,6 +27,14 @@ $ neewer all power off
 $ neewer t1 cct 100 5600          # position 1 -> 5600 K
 ```
 
+Firmware flashing lives in its own tool, `neewer-ota` (dry-run by default;
+`--confirm` writes). Stop anything else holding the light first:
+
+```console
+$ neewer-ota <MAC> --file fw.bin --check     # connect, probe, validate, no write
+$ neewer-ota <MAC> --file fw.bin --confirm   # actually flash
+```
+
 ## What you get
 
 - **`neewer.Fleet`** — the batteries-included BLE client: continuous discovery,

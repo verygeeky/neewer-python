@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "neewer"
-version = "0.1.2"
+version = "0.1.3"
 description = "Python control library for Neewer TL-series RGB tube lights over Bluetooth LE"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -36,6 +36,7 @@ dev = ["pytest>=8", "ruff>=0.5"]
 
 [project.scripts]
 neewer = "neewer.cli:main"
+neewer-ota = "neewer.ota:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["neewer"]
