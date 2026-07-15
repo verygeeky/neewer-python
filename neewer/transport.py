@@ -23,13 +23,33 @@ transport later accepts in :meth:`Transport.connect`, and ``connect`` returns a
 """
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from typing import Any, Callable, Protocol
+
+log = logging.getLogger("neewer.transport")
 
 #: GATT characteristic the lights accept command writes on (write-no-response).
 WRITE_UUID = "69400002-b5a3-f393-e0a9-e50e24dcca99"
 #: GATT characteristic the lights push status notifications on.
 NOTIFY_UUID = "69400003-b5a3-f393-e0a9-e50e24dcca99"
+
+#: AD structure type for the Complete Local Name (Bluetooth assigned numbers).
+#: A tube carries its ``NW-...`` name in this field of the primary advertising
+#: PDU, so a passive scan filtered on this type still sees everything identity
+#: needs. Kept as a plain int so building the match spec needs no bleak import.
+_COMPLETE_LOCAL_NAME = 0x09
+
+
+def name_or_patterns(prefixes) -> list[tuple[int, int, bytes]]:
+    """Passive-scan match patterns for the tube-name prefixes.
+
+    Returns ``(start_position, ad_type, content)`` tuples. Each tube's Complete
+    Local Name begins with one of the claimed prefixes (``NW-``, ``NWR``, ...), so
+    a BlueZ advertisement monitor built from these wakes the host only for our
+    lights. Pure (no bleak import) so it is unit-testable without a radio.
+    """
+    return [(0, _COMPLETE_LOCAL_NAME, prefix.encode("ascii")) for prefix in prefixes]
 
 
 @dataclass(frozen=True)
@@ -90,10 +110,19 @@ class BleakTransport:
 
     ``bleak`` is imported lazily inside each method so this class can be defined and
     referenced without a BLE stack present; only *using* it needs ``bleak``.
+
+    ``passive_scan`` requests a passive scan (no scan requests, less airtime and
+    radio energy). The tube name is in the primary advertising PDU, so identity is
+    unaffected; ``prefixes`` seed the BlueZ advertisement-monitor filter. Passive
+    mode needs ``bluetoothd --experimental`` on Linux, so if it can't start we log
+    a warning and fall back to active scanning rather than a fleet that silently
+    discovers nothing.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, passive_scan: bool = False, prefixes=()) -> None:
         self._scanner = None
+        self._passive = passive_scan
+        self._prefixes = tuple(prefixes)
 
     async def start_scan(self, on_advert: Callable[[Advert], None]) -> None:
         from bleak import BleakScanner
@@ -104,8 +133,47 @@ class BleakTransport:
             name = adv.local_name or device.name or ""
             on_advert(Advert(device.address, name, adv.rssi, device))
 
+        if self._passive and await self._start_passive(_cb):
+            return
         self._scanner = BleakScanner(detection_callback=_cb)
         await self._scanner.start()
+
+    async def _start_passive(self, cb: Callable) -> bool:
+        """Try to start a passive scan; return ``True`` on success, ``False`` to fall back.
+
+        Any failure to set up passive mode (a stack without the advertisement-monitor
+        API, an older bleak, ``--experimental`` disabled) degrades to active scanning
+        with a warning — the mandate is to never leave the fleet unable to discover.
+        """
+        if not self._prefixes:
+            log.warning("passive scan requested without name prefixes; using active scan")
+            return False
+        try:
+            from bleak import BleakScanner
+            from bleak.args.bluez import BlueZScannerArgs, OrPattern
+            from bleak.assigned_numbers import AdvertisementDataType
+
+            or_patterns = [
+                OrPattern(start, AdvertisementDataType(ad_type), content)
+                for start, ad_type, content in name_or_patterns(self._prefixes)
+            ]
+            scanner = BleakScanner(
+                detection_callback=cb,
+                scanning_mode="passive",
+                bluez=BlueZScannerArgs(or_patterns=or_patterns),
+            )
+            await scanner.start()
+        except Exception as exc:
+            # Broad by design: whatever went wrong, active scanning still works, and
+            # a degraded-but-working fleet beats a clean failure that finds nothing.
+            log.warning(
+                "passive scan unavailable (%s); falling back to active scan. "
+                "On Linux, passive mode needs bluetoothd --experimental.",
+                exc,
+            )
+            return False
+        self._scanner = scanner
+        return True
 
     async def stop_scan(self) -> None:
         if self._scanner is not None:

@@ -6,6 +6,16 @@ versioning — **pre-1.0, a minor bump may change the public API.**
 
 ## [Unreleased]
 
+### Added
+- **`Fleet(passive_scan=True)`**: an opt-in passive scan (less airtime and radio
+  energy than continuous active scanning). The tube name is in the primary
+  advertising PDU, so identity is unaffected, and a BlueZ advertisement-monitor
+  filter is built from the name prefixes. Passive mode needs
+  `bluetoothd --experimental` on Linux; if it can't start, the transport logs a
+  warning and falls back to active scanning rather than a fleet that silently
+  discovers nothing. Confirmed on real hardware: the fallback still discovers
+  tubes on a stock stack.
+
 ## [0.1.3] — 2026-07-14
 
 ### Added

@@ -166,11 +166,15 @@ class Fleet:
     def __init__(self, prefixes=DEFAULT_PREFIXES, positions=None,
                  rescan_interval: float = 20.0, book: DeviceBook | None = None,
                  transport: Transport | None = None, write_timeout: float = 0.5,
-                 liveness_interval: float = 30.0):
+                 liveness_interval: float = 30.0, passive_scan: bool = False):
         self.prefixes = tuple(prefixes)
         #: The BLE seam. Defaults to the bleak-backed transport; a test or an
         #: alternative backend injects its own (see :mod:`neewer.transport`).
-        self.transport: Transport = transport or BleakTransport()
+        #: ``passive_scan`` asks that default transport to scan passively (less
+        #: airtime/energy); it falls back to active if the stack can't do it.
+        self.transport: Transport = transport or BleakTransport(
+            passive_scan=passive_scan, prefixes=self.prefixes
+        )
         #: Per-write deadline (seconds). A write-without-response to a *healthy* link
         #: returns in milliseconds; one to a **half-open** link (BlueZ still reports
         #: "connected" but the ACL is dead) blocks for seconds. Unbounded, that single
