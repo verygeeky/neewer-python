@@ -77,6 +77,28 @@ $ pip install neewer
 Requires Python 3.11+. The only runtime dependency is
 [`bleak`](https://github.com/hbldh/bleak).
 
+### Windows
+
+Installation works out of the box on Windows with Bluetooth LE support. The
+`bleak` dependency automatically installs the required WinRT packages for
+Windows Bluetooth access.
+
+If the console scripts (`neewer`, `neewer-ota`) are not on your PATH after
+installation, you have two options:
+
+1. Add the Scripts directory to your PATH:
+   - Typically located at `%APPDATA%\Python\Python3XX\Scripts`
+   - Add this directory to your system PATH environment variable
+
+2. Use the module directly:
+   ```console
+   python -m neewer.cli scan
+   python -m neewer.cli all hsi 240 100 100
+   python -m neewer.ota <MAC> --file fw.bin --check
+   ```
+
+The Python module approach works everywhere without PATH configuration.
+
 ## The typed API
 
 Every action is a method on `Fleet`; the first argument is always a target
