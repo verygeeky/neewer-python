@@ -1,6 +1,6 @@
 """Golden-byte and invariant tests for :mod:`neewer.protocol.frames`.
 
-These frames are reverse-engineered protocol bytes confirmed against real
+These frames are captured protocol bytes confirmed against real
 hardware. The exact-byte assertions here are the backbone of the suite: if a
 refactor changes any builder's output, that is a protocol regression and must
 fail loudly. Every builder also gets a checksum-invariant check so the

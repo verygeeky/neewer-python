@@ -1,6 +1,6 @@
 """Golden-byte tests for the query/read frame builders in :mod:`neewer.protocol.frames`.
 
-These ask a light for state; like every other frame they are reverse-engineered
+These ask a light for state; like every other frame they are captured
 protocol bytes and must not silently change. We assert the exact output and the
 checksum invariant, and that MAC-addressed queries validate their MAC length.
 """
