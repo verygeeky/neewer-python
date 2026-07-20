@@ -14,6 +14,9 @@ async def main():
 asyncio.run(main())
 ```
 
+**New here?** [QUICKSTART.md](QUICKSTART.md) walks from install to working CLI
+control (Linux / Windows / macOS), plus a LedFx screen-reactive-lighting bonus.
+
 The **typed methods** (`set_hsi`, `power`, `set_cct`, …) are the primary API. A
 one-line string grammar (`fleet.dispatch("all hsi 240 100 100")`) is also
 available as a convenience — see [The string grammar](#the-string-grammar).
@@ -75,7 +78,8 @@ $ pip install neewer
 ```
 
 Requires Python 3.11+. The only runtime dependency is
-[`bleak`](https://github.com/hbldh/bleak).
+[`bleak`](https://github.com/hbldh/bleak). Developed on Linux; for Windows see
+[docs/INSTALL-WINDOWS.md](docs/INSTALL-WINDOWS.md) (draft — feedback welcome).
 
 ### Windows
 
